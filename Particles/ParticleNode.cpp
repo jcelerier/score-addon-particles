@@ -1,4 +1,5 @@
 #include "ParticleNode.hpp"
+#include <score/tools/Debug.hpp>
 
 const int m_materialSize = 16;
 const int instances = 5'000'000;
@@ -183,7 +184,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     {
       auto& rhi = *renderer.state.rhi;
       auto ps = rhi.newGraphicsPipeline();
-      ensure(ps);
+      SCORE_ASSERT(ps);
 
       QRhiGraphicsPipeline::TargetBlend premulAlphaBlend;
       premulAlphaBlend.enable = true;
@@ -212,7 +213,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
       // Shader resource bindings
       auto srb = rhi.newShaderResourceBindings();
-      ensure(srb);
+      SCORE_ASSERT(srb);
 
       QVector<QRhiShaderResourceBinding> bindings;
 
@@ -241,14 +242,14 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
       // Bind samplers
       srb->setBindings(bindings.begin(), bindings.end());
-      ensure(srb->build());
+      SCORE_ASSERT(srb->build());
 
       ps->setShaderResourceBindings(srb);
 
-      ensure(rt.renderPass);
+      SCORE_ASSERT(rt.renderPass);
       ps->setRenderPassDescriptor(rt.renderPass);
 
-      ensure(ps->build());
+      SCORE_ASSERT(ps->build());
       return Pipeline{ps, srb};
     };
 
@@ -268,10 +269,10 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
       {
         particleOffsets = rhi.newBuffer(
               QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer | QRhiBuffer::StorageBuffer, instances * 2 * sizeof(float));
-        ensure(particleOffsets->build());
+        SCORE_ASSERT(particleOffsets->build());
         particleSpeeds = rhi.newBuffer(
               QRhiBuffer::Immutable, QRhiBuffer::StorageBuffer, instances * 2 * sizeof(float));
-        ensure(particleSpeeds->build());
+        SCORE_ASSERT(particleSpeeds->build());
       }
       if (!m_meshBuffer)
       {
@@ -285,7 +286,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     {
       m_materialUBO
           = rhi.newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, m_materialSize);
-      ensure(m_materialUBO->build());
+      SCORE_ASSERT(m_materialUBO->build());
     }
 
     // Last pass is the main write
@@ -344,11 +345,11 @@ void main()
         };
 
         csrb->setBindings(bindings, bindings + 2);
-        ensure(csrb->build());
+        SCORE_ASSERT(csrb->build());
       }
       compute->setShaderResourceBindings(csrb);
       compute->setShaderStage(QRhiShaderStage(QRhiShaderStage::Compute, computeShader));
-      ensure(compute->build());
+      SCORE_ASSERT(compute->build());
     }
   }
 
