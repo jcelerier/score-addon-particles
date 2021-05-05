@@ -8,9 +8,9 @@ struct ParticuleNode : score::gfx::ProcessNode
 {
   ParticuleNode();
   virtual ~ParticuleNode();
-  const Mesh& mesh() const noexcept;
+  const Mesh& mesh() const noexcept override;
 
-  score::gfx::NodeRenderer* createRenderer() const noexcept;
+  score::gfx::NodeRenderer* createRenderer(Renderer& r) const noexcept override;
 
   std::unique_ptr<char[]> m_materialData;
 

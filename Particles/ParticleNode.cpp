@@ -97,7 +97,7 @@ ParticuleNode::ParticuleNode()
       fragColor = vec4(vpos.xy * 0.01, 0., 1.);
     }
   )_";
-  std::tie(m_vertexS, m_fragmentS) = makeShaders(m_mesh->defaultVertexShader(), frag);
+  std::tie(m_vertexS, m_fragmentS) = score::gfx::makeShaders(m_mesh->defaultVertexShader(), frag);
 
   m_materialData.reset(new char[m_materialSize]);
   std::fill_n(m_materialData.get(), m_materialSize, 0);
@@ -131,7 +131,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
 
 
-  TextureRenderTarget m_lastPassRT;
+  TextureRenderTarget m_rt;
 
   std::vector<Sampler> m_samplers;
 
@@ -159,7 +159,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     return {};
   }
 
-  TextureRenderTarget createRenderTarget(const RenderState& state) override
+  TextureRenderTarget createRenderTarget(const RenderState& state)
   {
     auto sz = state.size;
     if (auto true_sz = renderTargetSize())
@@ -167,8 +167,13 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
       sz = *true_sz;
     }
 
-    m_lastPassRT = score::gfx::createRenderTarget(state, sz);
-    return m_lastPassRT;
+    m_rt = score::gfx::createRenderTarget(state, QRhiTexture::RGBA8, sz);
+    return m_rt;
+  }
+
+  TextureRenderTarget renderTarget() const noexcept override
+  {
+    return m_rt;
   }
 
   Pipeline buildPassPipeline(Renderer& renderer, TextureRenderTarget tgt, QRhiBuffer* processUBO) {
@@ -262,6 +267,8 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
   {
     QRhi& rhi = *renderer.state.rhi;
 
+    if (!m_rt.renderTarget)
+      createRenderTarget(renderer.state);
     // init()
     {
       const auto& mesh = n.mesh();
@@ -295,8 +302,8 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
       pubo = rhi.newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(ProcessUBO));
       pubo->build();
 
-      auto p = buildPassPipeline(renderer, m_lastPassRT, pubo);
-      m_passes[0] = Pass{nullptr, m_lastPassRT, p, pubo};
+      auto p = buildPassPipeline(renderer, m_rt, pubo);
+      m_passes[0] = Pass{nullptr, m_rt, p, pubo};
     }
 
     {
@@ -334,7 +341,7 @@ void main()
     }
 }
 )_").arg(instances);
-      QShader computeShader = makeCompute(comp);
+      QShader computeShader = score::gfx::makeCompute(comp);
       compute = rhi.newComputePipeline();
 
       auto csrb = rhi.newShaderResourceBindings();
@@ -407,7 +414,7 @@ void main()
   void release(Renderer& r) override
   {
     releaseWithoutRenderTarget(r);
-    m_lastPassRT.release();
+    m_rt.release();
   }
 
 
@@ -479,7 +486,7 @@ void main()
   }
 };
 
-score::gfx::NodeRenderer* ParticuleNode::createRenderer() const noexcept
+score::gfx::NodeRenderer* ParticuleNode::createRenderer(Renderer& r) const noexcept
 {
   return new RenderedParticuleNode{*this};
 }
