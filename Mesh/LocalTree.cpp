@@ -6,7 +6,6 @@
 namespace Particles::Mesh
 {
 LocalTreeProcessComponent::LocalTreeProcessComponent(
-    const Id<score::Component>& id,
     ossia::net::node_base& parent,
     Particles::Mesh::Model& proc,
     const score::DocumentContext& sys,
@@ -15,7 +14,6 @@ LocalTreeProcessComponent::LocalTreeProcessComponent(
         parent,
         proc,
         sys,
-        id,
         "gfxComponent",
         parent_obj}
 {

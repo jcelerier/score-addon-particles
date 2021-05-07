@@ -42,9 +42,8 @@ public:
 ProcessExecutorComponent::ProcessExecutorComponent(
     Particles::Mesh::Model& element,
     const Execution::Context& ctx,
-    const Id<score::Component>& id,
     QObject* parent)
-    : ProcessComponent_T{element, ctx, id, "gfxExecutorComponent", parent}
+    : ProcessComponent_T{element, ctx, "gfxExecutorComponent", parent}
 {
   try
   {
