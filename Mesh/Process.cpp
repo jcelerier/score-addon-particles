@@ -6,9 +6,8 @@
 #include <QFileInfo>
 #include <QShaderBaker>
 
-#include <Gfx/Graph/node.hpp>
-#include <Gfx/Graph/nodes.hpp>
-#include <Gfx/Graph/shadercache.hpp>
+#include <Gfx/Graph/Node.hpp>
+#include <Gfx/Graph/ShaderCache.hpp>
 #include <Gfx/TexturePort.hpp>
 #include <wobjectimpl.h>
 W_OBJECT_IMPL(Particles::Mesh::Model)

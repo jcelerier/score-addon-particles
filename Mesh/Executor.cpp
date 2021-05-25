@@ -11,7 +11,7 @@
 #include <Gfx/GfxApplicationPlugin.hpp>
 #include <Gfx/GfxContext.hpp>
 #include <Gfx/GfxExec.hpp>
-#include <Gfx/Graph/phongnode.hpp>
+#include <Gfx/Graph/PhongNode.hpp>
 #include <Particles/ParticleNode.hpp>
 #include <Mesh/Process.hpp>
 #include <Gfx/TexturePort.hpp>
@@ -27,9 +27,9 @@ public:
     static auto mesh = gsl::span<const float>(
         ico.getInterleavedVertices(), ico.getInterleavedVertexSize() / sizeof(float));
     static auto idx = gsl::span<const unsigned int>(ico.getIndices(), ico.getIndexCount());
-    static TextureNormalMesh icosahedron{mesh, idx, (int)ico.getVertexCount()};
+    static score::gfx::TextureNormalMesh icosahedron{mesh, idx, (int)ico.getVertexCount()};
     //auto n = std::make_unique<PhongNode>(&icosahedron);
-    auto n = std::make_unique<ParticuleNode>();
+    auto n = std::make_unique<score::gfx::ParticuleNode>();
 
     id = exec_context->ui->register_node(std::move(n));
   }

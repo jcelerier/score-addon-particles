@@ -1,8 +1,9 @@
 #pragma once
-#include <Gfx/Graph/mesh.hpp>
-#include <Gfx/Graph/node.hpp>
-#include <Gfx/Graph/renderer.hpp>
+#include <Gfx/Graph/Node.hpp>
+#include <Gfx/Graph/RenderList.hpp>
 
+namespace score::gfx
+{
 struct RenderedParticuleNode;
 struct ParticuleNode : score::gfx::ProcessNode
 {
@@ -10,7 +11,7 @@ struct ParticuleNode : score::gfx::ProcessNode
   virtual ~ParticuleNode();
   const Mesh& mesh() const noexcept override;
 
-  score::gfx::NodeRenderer* createRenderer(Renderer& r) const noexcept override;
+  score::gfx::NodeRenderer* createRenderer(RenderList& r) const noexcept override;
 
   std::unique_ptr<char[]> m_materialData;
 
@@ -21,3 +22,4 @@ private:
   QShader m_vertexS;
   QShader m_fragmentS;
 };
+}

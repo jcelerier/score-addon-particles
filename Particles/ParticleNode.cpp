@@ -1,6 +1,11 @@
 #include "ParticleNode.hpp"
+#include <Gfx/Graph/NodeRenderer.hpp>
+
 #include <score/tools/Debug.hpp>
 
+
+namespace score::gfx
+{
 const int m_materialSize = 16;
 const int instances = 5'000'000;
 
@@ -125,11 +130,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
   };
   std::array<Pass, 1> m_passes;
 
-  //std::unique_ptr<char[]> m_materialData;
-
   ParticuleNode& n;
-
-
 
   TextureRenderTarget m_rt;
 
@@ -176,10 +177,10 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     return m_rt;
   }
 
-  Pipeline buildPassPipeline(Renderer& renderer, TextureRenderTarget tgt, QRhiBuffer* processUBO) {
+  Pipeline buildPassPipeline(RenderList& renderer, TextureRenderTarget tgt, QRhiBuffer* processUBO) {
 
     auto buildPipeline = [] (
-          const Renderer& renderer,
+          const RenderList& renderer,
           const Mesh& mesh,
           const QShader& vertexS, const QShader& fragmentS,
           const TextureRenderTarget& rt,
@@ -263,7 +264,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
   float data[instances * 3];
   float speed[instances * 3];
-  void init(Renderer& renderer) override
+  void init(RenderList& renderer) override
   {
     QRhi& rhi = *renderer.state.rhi;
 
@@ -360,7 +361,7 @@ void main()
     }
   }
 
-  void update(Renderer& renderer, QRhiResourceUpdateBatch& res) override
+  void update(RenderList& renderer, QRhiResourceUpdateBatch& res) override
   {
     if (m_materialUBO && m_materialSize > 0 && materialChangedIndex != n.materialChanged)
     {
@@ -390,7 +391,7 @@ void main()
     }
   }
 
-  void releaseWithoutRenderTarget(Renderer& r) override
+  void releaseWithoutRenderTarget(RenderList& r) override
   {
     {
       delete m_passes.back().p.pipeline;
@@ -411,14 +412,14 @@ void main()
     m_meshBuffer = nullptr;
   }
 
-  void release(Renderer& r) override
+  void release(RenderList& r) override
   {
     releaseWithoutRenderTarget(r);
     m_rt.release();
   }
 
 
-  void runPass(Renderer& renderer, QRhiCommandBuffer& cb, QRhiResourceUpdateBatch& res) override
+  void runPass(RenderList& renderer, QRhiCommandBuffer& cb, QRhiResourceUpdateBatch& res) override
   {
     // Update a first time everything
 
@@ -486,7 +487,7 @@ void main()
   }
 };
 
-score::gfx::NodeRenderer* ParticuleNode::createRenderer(Renderer& r) const noexcept
+score::gfx::NodeRenderer* ParticuleNode::createRenderer(RenderList& r) const noexcept
 {
   return new RenderedParticuleNode{*this};
 }
@@ -494,4 +495,5 @@ score::gfx::NodeRenderer* ParticuleNode::createRenderer(Renderer& r) const noexc
 RenderedParticuleNode::~RenderedParticuleNode()
 {
 
+}
 }
