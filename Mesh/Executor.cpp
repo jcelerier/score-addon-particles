@@ -29,7 +29,7 @@ public:
     static auto idx = gsl::span<const unsigned int>(ico.getIndices(), ico.getIndexCount());
     static score::gfx::TextureNormalMesh icosahedron{mesh, idx, (int)ico.getVertexCount()};
     //auto n = std::make_unique<PhongNode>(&icosahedron);
-    auto n = std::make_unique<score::gfx::ParticuleNode>();
+    auto n = std::make_unique<Particle::Node>();
 
     id = exec_context->ui->register_node(std::move(n));
   }

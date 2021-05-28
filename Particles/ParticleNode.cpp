@@ -4,12 +4,12 @@
 #include <score/tools/Debug.hpp>
 
 
-namespace score::gfx
+namespace Particle
 {
 const int m_materialSize = 16;
 const int instances = 5'000'000;
 
-struct InstancedMesh : Mesh
+struct InstancedMesh : score::gfx::Mesh
 {
   InstancedMesh(gsl::span<const float> vtx, int count)
   {
@@ -84,7 +84,7 @@ struct InstancedTexturedCube final : InstancedMesh
     return t;
   }
 };
-ParticuleNode::ParticuleNode()
+Node::Node()
     : m_mesh{&InstancedTexturedCube::instance()}
 {
   const char* frag = R"_(#version 450
@@ -107,34 +107,34 @@ ParticuleNode::ParticuleNode()
   m_materialData.reset(new char[m_materialSize]);
   std::fill_n(m_materialData.get(), m_materialSize, 0);
 
-  output.push_back(new Port{this, {}, Types::Image, {}});
+  output.push_back(new score::gfx::Port{this, {}, score::gfx::Types::Image, {}});
 }
 
-ParticuleNode::~ParticuleNode()
+Node::~Node()
 {
 
 }
 
-const Mesh& ParticuleNode::mesh() const noexcept
+const score::gfx::Mesh& Node::mesh() const noexcept
 {
   return *this->m_mesh;
 }
 
-struct RenderedParticuleNode : score::gfx::NodeRenderer
+struct Renderer : score::gfx::NodeRenderer
 {
   struct Pass {
     QRhiSampler* sampler{};
-    TextureRenderTarget renderTarget;
-    Pipeline p;
+    score::gfx::TextureRenderTarget renderTarget;
+    score::gfx::Pipeline p;
     QRhiBuffer* processUBO{};
   };
   std::array<Pass, 1> m_passes;
 
-  ParticuleNode& n;
+  Node& n;
 
-  TextureRenderTarget m_rt;
+  score::gfx::TextureRenderTarget m_rt;
 
-  std::vector<Sampler> m_samplers;
+  std::vector<score::gfx::Sampler> m_samplers;
 
   QRhiBuffer* m_meshBuffer{};
   QRhiBuffer* m_idxBuffer{};
@@ -147,20 +147,20 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
   QRhiComputePipeline* compute{};
 
-  RenderedParticuleNode(const ParticuleNode& node) noexcept
+  Renderer(const Node& node) noexcept
     : score::gfx::NodeRenderer{}
-    , n{const_cast<ParticuleNode&>(node)}
+    , n{const_cast<Node&>(node)}
   {
 
   }
 
-  virtual ~RenderedParticuleNode();
+  virtual ~Renderer();
   std::optional<QSize> renderTargetSize() const noexcept override
   {
     return {};
   }
 
-  TextureRenderTarget createRenderTarget(const RenderState& state)
+  score::gfx::TextureRenderTarget createRenderTarget(const score::gfx::RenderState& state)
   {
     auto sz = state.size;
     if (auto true_sz = renderTargetSize())
@@ -172,21 +172,21 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     return m_rt;
   }
 
-  TextureRenderTarget renderTarget() const noexcept override
+  score::gfx::TextureRenderTarget renderTarget() const noexcept override
   {
     return m_rt;
   }
 
-  Pipeline buildPassPipeline(RenderList& renderer, TextureRenderTarget tgt, QRhiBuffer* processUBO) {
+  score::gfx::Pipeline buildPassPipeline(score::gfx::RenderList& renderer, score::gfx::TextureRenderTarget tgt, QRhiBuffer* processUBO) {
 
     auto buildPipeline = [] (
-          const RenderList& renderer,
-          const Mesh& mesh,
+          const score::gfx::RenderList& renderer,
+          const score::gfx::Mesh& mesh,
           const QShader& vertexS, const QShader& fragmentS,
-          const TextureRenderTarget& rt,
+          const score::gfx::TextureRenderTarget& rt,
           QRhiBuffer* m_processUBO,
           QRhiBuffer* m_materialUBO,
-          const std::vector<Sampler>& samplers)
+          const std::vector<score::gfx::Sampler>& samplers)
     {
       auto& rhi = *renderer.state.rhi;
       auto ps = rhi.newGraphicsPipeline();
@@ -228,7 +228,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
       {
         const auto rendererBinding
-            = QRhiShaderResourceBinding::uniformBuffer(0, bindingStages, renderer.m_rendererUBO);
+            = QRhiShaderResourceBinding::uniformBuffer(0, bindingStages, &renderer.outputUBO());
         bindings.push_back(rendererBinding);
       }
 
@@ -256,7 +256,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
       ps->setRenderPassDescriptor(rt.renderPass);
 
       SCORE_ASSERT(ps->build());
-      return Pipeline{ps, srb};
+      return score::gfx::Pipeline{ps, srb};
     };
 
     return buildPipeline(renderer,  n.mesh(), n.m_vertexS, n.m_fragmentS, tgt, processUBO, m_materialUBO, m_samplers);
@@ -264,7 +264,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
 
   float data[instances * 3];
   float speed[instances * 3];
-  void init(RenderList& renderer) override
+  void init(score::gfx::RenderList& renderer) override
   {
     QRhi& rhi = *renderer.state.rhi;
 
@@ -300,7 +300,7 @@ struct RenderedParticuleNode : score::gfx::NodeRenderer
     // Last pass is the main write
     {
       QRhiBuffer* pubo{};
-      pubo = rhi.newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(ProcessUBO));
+      pubo = rhi.newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, sizeof(score::gfx::ProcessUBO));
       pubo->build();
 
       auto p = buildPassPipeline(renderer, m_rt, pubo);
@@ -361,7 +361,7 @@ void main()
     }
   }
 
-  void update(RenderList& renderer, QRhiResourceUpdateBatch& res) override
+  void update(score::gfx::RenderList& renderer, QRhiResourceUpdateBatch& res) override
   {
     if (m_materialUBO && m_materialSize > 0 && materialChangedIndex != n.materialChanged)
     {
@@ -374,7 +374,7 @@ void main()
       // Update all the process UBOs
       {
         n.standardUBO.passIndex = 0;
-        res.updateDynamicBuffer(m_passes[0].processUBO, 0, sizeof(ProcessUBO), &this->n.standardUBO);
+        res.updateDynamicBuffer(m_passes[0].processUBO, 0, sizeof(score::gfx::ProcessUBO), &this->n.standardUBO);
       }
     }
 
@@ -391,7 +391,7 @@ void main()
     }
   }
 
-  void releaseWithoutRenderTarget(RenderList& r) override
+  void releaseWithoutRenderTarget(score::gfx::RenderList& r) override
   {
     {
       delete m_passes.back().p.pipeline;
@@ -412,14 +412,14 @@ void main()
     m_meshBuffer = nullptr;
   }
 
-  void release(RenderList& r) override
+  void release(score::gfx::RenderList& r) override
   {
     releaseWithoutRenderTarget(r);
     m_rt.release();
   }
 
 
-  void runPass(RenderList& renderer, QRhiCommandBuffer& cb, QRhiResourceUpdateBatch& res) override
+  void runPass(score::gfx::RenderList& renderer, QRhiCommandBuffer& cb, QRhiResourceUpdateBatch& res) override
   {
     // Update a first time everything
 
@@ -487,12 +487,12 @@ void main()
   }
 };
 
-score::gfx::NodeRenderer* ParticuleNode::createRenderer(RenderList& r) const noexcept
+score::gfx::NodeRenderer* Node::createRenderer(score::gfx::RenderList& r) const noexcept
 {
-  return new RenderedParticuleNode{*this};
+  return new Renderer{*this};
 }
 
-RenderedParticuleNode::~RenderedParticuleNode()
+Renderer::~Renderer()
 {
 
 }

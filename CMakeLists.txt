@@ -11,7 +11,6 @@ score_common_setup()
 # Source files
 set(HDRS
     Mesh/Executor.hpp
-    Mesh/LocalTree.hpp
     Mesh/Metadata.hpp
     Mesh/Presenter.hpp
     Mesh/Process.hpp
@@ -27,7 +26,6 @@ set(HDRS
 
 set(SRCS
     Mesh/Executor.cpp
-    Mesh/LocalTree.cpp
     Mesh/Presenter.cpp
     Mesh/Process.cpp
     Mesh/View.cpp
